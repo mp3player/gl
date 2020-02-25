@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #canvas{position:absolute;top:0;left:0;}
+    </style>
+    <script src="https://cdn.bootcss.com/gl-matrix/2.8.1/gl-matrix.js"></script>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import {xhr} from './xhr.js'
+        import {GL} from './gl.js'
+        import {Rect} from './rect.js'
+        import {Rect1} from './rect1.js'
+        import {Triangle} from './triangle.js'
+
+        let p1 = xhr('./vertex.vert')
+        let p2 = xhr('./fragment.frag')
+
+        let canvas = document.querySelector('#canvas')
+        canvas.width = innerWidth
+        canvas.height = innerHeight
+
+        let gl = canvas.getContext('webgl2')
+
+        let rx=0,ry=0,tz=-10,tx=0,ty=0
+        document.onmousedown = function(e){
+            let sx = e.x,sy = e.y
+            if(e.button == 0){
+                //rotate
+                document.onmousemove = function(ev){
+                    ry += (ev.x - sx) * .01
+                    rx += (ev.y - sy) * .01
+
+                    sx = ev.x,sy = ev.y
+                }
+            }
+            if(e.button == 2){
+                //translate
+                document.onmousemove = function(ev){
+                    tx += (ev.x - sx) * .01
+                    ty += (sy - ev.y) * .01
+                    sx = ev.x,sy = ev.y
+                }
+            }
+            document.onmouseup = function(){
+                document.onmousemove = null
+                document.onmouseup = null
+            }
+            return false
+        }
+        document.onmousewheel = function(e){
+            tz += e.wheelDelta > 0 ? 1 : -1
+        }
+
+        Promise.all([p1,p2])
+            .then(d =>{
+                let util = new GL(gl,d[0],d[1])
+
+                // let aPng = util.createTexture('./a.png')
+                // let bPng = util.createTexture('./b.png')
+                // let cPng = util.createTexture('./c.png')
+                let dPng = util.createTexture('./d.png')
+                
+                //矩形vao
+                let rectVAO = util.createVAO()
+
+                util.createEBO(Rect.index)
+                util.createVBO(Rect.position)
+                util.setVec3(0)
+                util.createVBO(Rect.color)
+                util.setVec3(1)
+                util.createVBO(Rect.uv)
+                util.setVec2(2)
+                util.createVBO(Rect.normal)
+                util.setVec3(3)
+
+                gl.bindVertexArray(null)
+                //矩形
+                let triangleVAO = util.createVAO()
+                util.createEBO(Triangle.index)
+
+                util.createVBO(Triangle.position)
+                util.setVec3(0)
+                util.createVBO(Triangle.color)
+                util.setVec3(1)
+                util.createVBO(Triangle.uv)
+                util.setVec2(2)
+                gl.bindVertexArray(null)
+                
+                //投影变换
+                let camera = mat4.create()
+                mat4.perspective(camera,45 * Math.PI / 180,innerWidth/innerHeight,.1,10000)
+
+                //视图空间
+                // let fbo = util.createFBO(innerWidth,innerHeight)
+
+                let render = () => {
+                   
+                    let mv = mat4.create()
+                    mat4.translate(mv,mv,[tx,ty,tz])
+                    mat4.rotate(mv,mv,rx,[1,0,0])
+                    mat4.rotate(mv,mv,ry,[0,1,0])
+
+                    util.clear()
+
+                    gl.bindVertexArray(rectVAO)
+                    gl.useProgram(util.program)
+                    util.setMat4('projectionMatrix',camera)
+                    util.setMat4('modelViewMatrix',mv)
+                    gl.activeTexture(gl.TEXTURE0)
+                    gl.bindTexture(gl.TEXTURE_2D,dPng)
+                    util.setInt('uTexture',0)
+                    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
+                    gl.bindTexture(gl.TEXTURE_2D,null)
+
+                    gl.bindVertexArray(triangleVAO)
+                    gl.useProgram(util.program)
+                    util.setMat4('projectionMatrix',camera)
+                    util.setMat4('modelViewMatrix',mv)
+                    gl.activeTexture(gl.TEXTURE0)
+                    gl.bindTexture(gl.TEXTURE_2D,dPng)
+                    util.setInt('uTexture',0)
+                    gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 0)
+                    gl.bindTexture(gl.TEXTURE_2D,null)
+
+
+                    requestAnimationFrame(render)
+                }
+
+                render()
+
+            })
+    </script>
+</body>
+</html>
