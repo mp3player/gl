@@ -67,8 +67,8 @@
                 let util2 = new GL(gl,d[0],d[1])
 
                 let aPng = util.createTexture('./a.png')
-                // let bPng = util.createTexture('./b.png')
-                // let cPng = util.createTexture('./c.png')
+                let bPng = util.createTexture('./b.png')
+                let cPng = util.createTexture('./c.png')
                 let dPng = util.createTexture('./d.png')
                 
                 //矩形vao
@@ -84,10 +84,10 @@
 
                 gl.bindVertexArray(null)
 
-                let lineVAO = util.createVAO()
-                util.createVBO(StraightLine.position)
+                let triangleVAO = util.createVAO()
+                util.createVBO(Triangle.position)
                 util.setVec3(0)
-                util.createVBO(StraightLine.color)
+                util.createVBO(Triangle.color)
                 util.setVec3(1)
 
                 gl.bindVertexArray(null)
@@ -115,17 +115,20 @@
                     gl.activeTexture(gl.TEXTURE1)
                     gl.bindTexture(gl.TEXTURE_2D,aPng)
                     util.setInt('normalSampler',1)
-                    util.setFloat('time',time)
-                    time += .001
+                    
                     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
                     gl.bindTexture(gl.TEXTURE_2D,null)
                     
                     //线条
-                    // gl.bindVertexArray(lineVAO)
-                    // gl.useProgram(util.program)
-                    // util.setMat4('projectionMatrix',camera)
-                    // util.setMat4('modelViewMatrix',mv)
-                    // gl.drawArrays(gl.LINES,0,2)
+                    gl.bindVertexArray(triangleVAO)
+                    gl.useProgram(util.program)
+                    util.setMat4('projectionMatrix',camera)
+                    util.setMat4('modelViewMatrix',mv)
+                    gl.activeTexture(gl.TEXTURE2)
+                    gl.bindTexture(gl.TEXTURE_2D,cPng)
+                    util.setInt('normalSampler',2)
+
+                    gl.drawArrays(gl.TRIANGLES,0,3)
 
 
                     requestAnimationFrame(render)
