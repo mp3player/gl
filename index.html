@@ -17,6 +17,8 @@
         import {Rect} from './rect.js'
         import {Rect1} from './rect1.js'
         import {Triangle} from './triangle.js'
+        import {Grid} from './grid.js'
+        import {StraightLine} from './straight-line.js'
 
         let p1 = xhr('./vertex.vert')
         let p2 = xhr('./fragment.frag')
@@ -27,7 +29,7 @@
 
         let gl = canvas.getContext('webgl2')
 
-        let rx=0,ry=0,tz=-10,tx=0,ty=0
+        let rx=-1,ry=-0.17,tz=-112,tx=-9.7,ty=8.9
         document.onmousedown = function(e){
             let sx = e.x,sy = e.y
             if(e.button == 0){
@@ -50,6 +52,8 @@
             document.onmouseup = function(){
                 document.onmousemove = null
                 document.onmouseup = null
+
+                console.log(rx,ry,tz,tx,ty)
             }
             return false
         }
@@ -60,8 +64,9 @@
         Promise.all([p1,p2])
             .then(d =>{
                 let util = new GL(gl,d[0],d[1])
+                let util2 = new GL(gl,d[0],d[1])
 
-                // let aPng = util.createTexture('./a.png')
+                let aPng = util.createTexture('./a.png')
                 // let bPng = util.createTexture('./b.png')
                 // let cPng = util.createTexture('./c.png')
                 let dPng = util.createTexture('./d.png')
@@ -76,29 +81,24 @@
                 util.setVec3(1)
                 util.createVBO(Rect.uv)
                 util.setVec2(2)
-                util.createVBO(Rect.normal)
-                util.setVec3(3)
 
                 gl.bindVertexArray(null)
-                //矩形
-                let triangleVAO = util.createVAO()
-                util.createEBO(Triangle.index)
 
-                util.createVBO(Triangle.position)
+                let lineVAO = util.createVAO()
+                util.createVBO(StraightLine.position)
                 util.setVec3(0)
-                util.createVBO(Triangle.color)
+                util.createVBO(StraightLine.color)
                 util.setVec3(1)
-                util.createVBO(Triangle.uv)
-                util.setVec2(2)
+
                 gl.bindVertexArray(null)
-                
+
                 //投影变换
                 let camera = mat4.create()
-                mat4.perspective(camera,45 * Math.PI / 180,innerWidth/innerHeight,.1,10000)
+                mat4.perspective(camera,45 * Math.PI / 180,innerWidth/innerHeight,.1,1000000)
 
-                //视图空间
-                // let fbo = util.createFBO(innerWidth,innerHeight)
+                let grid = new Grid(gl)
 
+                let time = 0
                 let render = () => {
                    
                     let mv = mat4.create()
@@ -107,26 +107,25 @@
                     mat4.rotate(mv,mv,ry,[0,1,0])
 
                     util.clear()
-
+                    grid.render(camera,mv)
                     gl.bindVertexArray(rectVAO)
                     gl.useProgram(util.program)
                     util.setMat4('projectionMatrix',camera)
                     util.setMat4('modelViewMatrix',mv)
-                    gl.activeTexture(gl.TEXTURE0)
-                    gl.bindTexture(gl.TEXTURE_2D,dPng)
-                    util.setInt('uTexture',0)
+                    gl.activeTexture(gl.TEXTURE1)
+                    gl.bindTexture(gl.TEXTURE_2D,aPng)
+                    util.setInt('normalSampler',1)
+                    util.setFloat('time',time)
+                    time += .001
                     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
                     gl.bindTexture(gl.TEXTURE_2D,null)
-
-                    gl.bindVertexArray(triangleVAO)
-                    gl.useProgram(util.program)
-                    util.setMat4('projectionMatrix',camera)
-                    util.setMat4('modelViewMatrix',mv)
-                    gl.activeTexture(gl.TEXTURE0)
-                    gl.bindTexture(gl.TEXTURE_2D,dPng)
-                    util.setInt('uTexture',0)
-                    gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 0)
-                    gl.bindTexture(gl.TEXTURE_2D,null)
+                    
+                    //线条
+                    // gl.bindVertexArray(lineVAO)
+                    // gl.useProgram(util.program)
+                    // util.setMat4('projectionMatrix',camera)
+                    // util.setMat4('modelViewMatrix',mv)
+                    // gl.drawArrays(gl.LINES,0,2)
 
 
                     requestAnimationFrame(render)

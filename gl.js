@@ -32,10 +32,24 @@ class GL{
         this.gl = gl
         this.vs = vs
         this.fs = fs
-        this.program = initProgram(gl,vs,fs)
+        this.program = this.initProgram(this.vs,this.fs)
     }
-    init(){
-
+    initProgram(vs,fs){
+        let gl = this.gl
+        let program = gl.createProgram()
+        let v = initShader(gl,gl.VERTEX_SHADER,vs)
+        let f = initShader(gl,gl.FRAGMENT_SHADER,fs)
+    
+        gl.attachShader(program,v)
+        gl.attachShader(program,f)
+    
+        gl.linkProgram(program)
+    
+        if(!gl.getProgramParameter(program,gl.LINK_STATUS)){
+            console.error(gl.getProgramInfoLog(program))
+            return null
+        }
+        return program
     }
     //顶点数组对象
     createVAO(){
@@ -96,6 +110,8 @@ class GL{
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 
+        framebuffer.texture = texture
+
         return framebuffer
     }
     //创建贴图
@@ -154,7 +170,7 @@ class GL{
     setMat4(name,value){
         let gl = this.gl
         let program = this.program
-        let p = gl.getUniformLocation(program,name)
+        let p = gl.getUniformLocation(this.program,name)
         gl.uniformMatrix4fv(p,false,value)
     }
     clear(r=0,g=0,b=0,a=1){
@@ -170,4 +186,4 @@ class GL{
     }
 }
 
-export {GL}
+export {GL,initProgram}
