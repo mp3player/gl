@@ -49,6 +49,8 @@ class GL{
             console.error(gl.getProgramInfoLog(program))
             return null
         }
+        gl.deleteShader(v)
+        gl.deleteShader(f)
         return program
     }
     //顶点数组对象

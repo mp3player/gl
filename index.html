@@ -15,7 +15,6 @@
         import {xhr} from './xhr.js'
         import {GL} from './gl.js'
         import {Rect} from './rect.js'
-        import {Rect1} from './rect1.js'
         import {Triangle} from './triangle.js'
         import {Grid} from './grid.js'
         import {StraightLine} from './straight-line.js'
@@ -81,15 +80,6 @@
                 util.setVec3(1)
                 util.createVBO(Rect.uv)
                 util.setVec2(2)
-
-                gl.bindVertexArray(null)
-
-                let triangleVAO = util.createVAO()
-                util.createVBO(Triangle.position)
-                util.setVec3(0)
-                util.createVBO(Triangle.color)
-                util.setVec3(1)
-
                 gl.bindVertexArray(null)
 
                 //投影变换
@@ -107,30 +97,18 @@
                     mat4.rotate(mv,mv,ry,[0,1,0])
 
                     util.clear()
-                    grid.render(camera,mv)
+
                     gl.bindVertexArray(rectVAO)
                     gl.useProgram(util.program)
                     util.setMat4('projectionMatrix',camera)
                     util.setMat4('modelViewMatrix',mv)
                     gl.activeTexture(gl.TEXTURE1)
-                    gl.bindTexture(gl.TEXTURE_2D,aPng)
+                    gl.bindTexture(gl.TEXTURE_2D,dPng)
                     util.setInt('normalSampler',1)
                     
                     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
                     gl.bindTexture(gl.TEXTURE_2D,null)
                     
-                    //线条
-                    gl.bindVertexArray(triangleVAO)
-                    gl.useProgram(util.program)
-                    util.setMat4('projectionMatrix',camera)
-                    util.setMat4('modelViewMatrix',mv)
-                    gl.activeTexture(gl.TEXTURE2)
-                    gl.bindTexture(gl.TEXTURE_2D,cPng)
-                    util.setInt('normalSampler',2)
-
-                    gl.drawArrays(gl.TRIANGLES,0,3)
-
-
                     requestAnimationFrame(render)
                 }
 

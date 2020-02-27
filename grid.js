@@ -3,10 +3,10 @@ import {GL} from './gl.js'
 
 let xLine = {
     position:[
-        [
-            -100,0,0,
-            100,0,0
-        ]
+        // [
+        //     -100,0,0,
+        //     100,0,0
+        // ]
     ],
     color:[
         1,0,0,
@@ -64,7 +64,7 @@ class Grid extends GL {
         //将数据进行拷贝生成，附加10条数据
         // -10,0,0,
         // 10,0,0
-        for(let i =0;i<20;i++){
+        for(let i =1;i<20;i++){
             if(i % 2 == 0){
                 xLine.position.push([
                     -100,i * 5,0,
@@ -106,6 +106,15 @@ class Grid extends GL {
             this.setVec3(1)
             this.yVAOs.push(vao1)
         }
+    }
+    getTexture(pm,mv){
+        let gl = this.gl
+        let fbo = this.createFBO(innerWidth / 2,innerHeight / 2)
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER,fbo)
+        this.render(pm,mv)
+        gl.bindFramebuffer(gl.FRAMEBUFFER,null)
+        return fbo.texture
     }
     render(pm,mv){
         let gl = this.gl
