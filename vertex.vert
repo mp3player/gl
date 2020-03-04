@@ -17,7 +17,6 @@ uniform vec3 spotLight;
 uniform vec3 spotPosition;
 uniform vec3 spotVector;
 uniform float spotIntensity;
-uniform float radius;
 
 out vec3 oColor;
 out vec2 oUv;
@@ -27,14 +26,19 @@ void main(){
     vec3 pos = (modelViewMatrix * vec4(position,1)).xyz;
     gl_Position = projectionMatrix * vec4(pos,1);
 
+    //先按照点光源色思路去做
     //求法线
-    vec3 transformNormal = normalize((normalMatrix * vec4(normal,1)).xyz);
-    //求光线方向
-    
+    vec3 transformNormal = normalize(normalMatrix * vec4(normal,1)).xyz;
 
-    oColor = color;
+    vec3 ne = normalize(spotPosition - pos);
 
-    
+    // 求夹角
+    float angle = max(dot(ne,transformNormal),0.0);
+
+    vec3 sColor = spotLight * angle;
+
+    oColor = vec3(angle);
+    // oColor = color * sColor;
 
     oUv = uv;
 }
