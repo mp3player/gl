@@ -15,9 +15,7 @@
         import {xhr} from './xhr.js'
         import {GL} from './gl.js'
         import {Rect} from './rect.js'
-        import {Triangle} from './triangle.js'
-        import {Grid} from './grid.js'
-        import {StraightLine} from './straight-line.js'
+        import {Camera} from './Camera.js'
 
         let p1 = xhr('./vertex.vert')
         let p2 = xhr('./fragment.frag')
@@ -28,7 +26,8 @@
 
         let gl = canvas.getContext('webgl2')
 
-        let rx=-1,ry=-0.17,tz=-112,tx=-9.7,ty=8.9
+        let rx=0,ry=0,tz=-100,tx=0,ty=0
+
         document.onmousedown = function(e){
             let sx = e.x,sy = e.y
             if(e.button == 0){
@@ -36,13 +35,12 @@
                 document.onmousemove = function(ev){
                     ry += (ev.x - sx) * .01
                     rx += (ev.y - sy) * .01
-
                     sx = ev.x,sy = ev.y
                 }
             }
             if(e.button == 2){
-                //translate
                 document.onmousemove = function(ev){
+                    
                     tx += (ev.x - sx) * .01
                     ty += (sy - ev.y) * .01
                     sx = ev.x,sy = ev.y
@@ -51,13 +49,14 @@
             document.onmouseup = function(){
                 document.onmousemove = null
                 document.onmouseup = null
-
-                console.log(rx,ry,tz,tx,ty)
             }
-            return false
         }
         document.onmousewheel = function(e){
             tz += e.wheelDelta > 0 ? 1 : -1
+        }
+        canvas.oncontextmenu = function(e){
+            e.preventDefault()
+            return false
         }
 
         Promise.all([p1,p2])
@@ -69,6 +68,7 @@
                 let bPng = util.createTexture('./b.png')
                 let cPng = util.createTexture('./c.png')
                 let dPng = util.createTexture('./d.png')
+                let fPng = util.createTexture('./f.jpg')
                 
                 //矩形vao
                 let rectVAO = util.createVAO()
@@ -80,34 +80,48 @@
                 util.setVec3(1)
                 util.createVBO(Rect.uv)
                 util.setVec2(2)
+                util.createVBO(Rect.normal)
+                util.setVec3(3)
                 gl.bindVertexArray(null)
 
                 //投影变换
-                let camera = mat4.create()
-                mat4.perspective(camera,45 * Math.PI / 180,innerWidth/innerHeight,.1,1000000)
-
-                let grid = new Grid(gl)
-
+                let camera = new Camera(45,innerWidth/innerHeight,.1,1000)
+                
                 let time = 0
+                let i = 1
                 let render = () => {
                    
                     let mv = mat4.create()
                     mat4.translate(mv,mv,[tx,ty,tz])
                     mat4.rotate(mv,mv,rx,[1,0,0])
                     mat4.rotate(mv,mv,ry,[0,1,0])
-
+                    //求法线矩阵
+                    let nm = mat4.create()
+                    mat4.invert(nm,mv)
+                    mat4.transpose(nm,nm)
                     util.clear()
 
                     gl.bindVertexArray(rectVAO)
                     gl.useProgram(util.program)
-                    util.setMat4('projectionMatrix',camera)
+                    util.setMat4('projectionMatrix',camera.render())
                     util.setMat4('modelViewMatrix',mv)
+                    util.setMat4('normalMatrix',nm)
+
+                    //聚光灯
+                    util.setUniformVec3('spotLight',new Float32Array([1,1,1]))
+                    util.setUniformVec3('spotPosition',new Float32Array([0,0,i]))
+                    util.setUniformVec3('spotVector',new Float32Array([0,0,-1]))
+                    
+                    util.setFloat('spotIntensity',1)
+           
                     gl.activeTexture(gl.TEXTURE1)
-                    gl.bindTexture(gl.TEXTURE_2D,dPng)
+                    gl.bindTexture(gl.TEXTURE_2D,fPng)
                     util.setInt('normalSampler',1)
                     
                     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0)
                     gl.bindTexture(gl.TEXTURE_2D,null)
+
+                    //放弃fbo
                     
                     requestAnimationFrame(render)
                 }

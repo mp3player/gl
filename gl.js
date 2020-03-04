@@ -140,7 +140,16 @@ class GL{
     
         return texture
     }
+    getTexture(pm,mv){
+        let gl = this.gl
+        let fbo = this.createFBO(innerWidth / 2,innerHeight / 2)
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER,fbo)
+        this.render(pm,mv)
+        gl.bindFramebuffer(gl.FRAMEBUFFER,null)
 
+        return fbo ? fbo.texture : null
+    }
     setVec2(index){
         let gl = this.gl
         gl.vertexAttribPointer(index,2,gl.FLOAT, gl.FALSE, 0,0)
@@ -171,9 +180,14 @@ class GL{
     }
     setMat4(name,value){
         let gl = this.gl
-        let program = this.program
         let p = gl.getUniformLocation(this.program,name)
         gl.uniformMatrix4fv(p,false,value)
+    }
+    setUniformVec3(name,value){
+        let gl = this.gl
+        let program = this.program
+        let p = gl.getUniformLocation(program,name)
+        gl.uniform3fv(p,value)
     }
     clear(r=0,g=0,b=0,a=1){
         let gl = this.gl

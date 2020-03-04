@@ -107,15 +107,7 @@ class Grid extends GL {
             this.yVAOs.push(vao1)
         }
     }
-    getTexture(pm,mv){
-        let gl = this.gl
-        let fbo = this.createFBO(innerWidth / 2,innerHeight / 2)
-        
-        gl.bindFramebuffer(gl.FRAMEBUFFER,fbo)
-        this.render(pm,mv)
-        gl.bindFramebuffer(gl.FRAMEBUFFER,null)
-        return fbo.texture
-    }
+    
     render(pm,mv){
         let gl = this.gl
 
